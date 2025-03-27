@@ -1,2 +1,2 @@
-# group_parser_bot
-Telegram_bot_group_parser
+# Group-parser-with-admin
+Telethon + Django
