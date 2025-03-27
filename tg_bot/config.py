@@ -17,7 +17,7 @@ CATEGORIES_JSON = 'categories.json'
 MAX_MESSAGES = 100000
 
 WEB_SERVER_HOST = "108.181.154.114"
-WEB_SERVER_PORT = 5000
+WEB_SERVER_PORT = 5432
 SECRET_KEY = '/QoXhzTJkyhzSKccxR+XV0pf4T2zqLfXzPlSwegi6Cs='  # Секретный ключ для Flask. Сгенерируйте случайную строку!
 ADMIN_USERNAME = 'Daniel11'  # Логин админа для входа на сайт
 ADMIN_PASSWORD = '8044$Daniel'  # Пароль админа для входа на сайт
