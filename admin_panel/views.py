@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from .models import Category, Message, Channel
-from .forms import ChannelForm, CategoryForm, MessageForm
+from .forms import ChannelForm, CategoryForm, MessageForm, UserRegistrationForm
 
 def index_view(request):
     category_id = request.GET.get('category')
@@ -47,6 +47,23 @@ def login_view(request):
     else:
         form = AuthenticationForm()
     return render(request, 'admin_panel/login.html', {'form': form})
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('admin_panel')
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, 'Registration successful! Now you can login.')
+            return redirect('login')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{error}')
+    else:
+        form = UserRegistrationForm()
+    return render(request, 'admin_panel/register.html', {'form': form})
 
 def logout_view(request):
     logout(request)

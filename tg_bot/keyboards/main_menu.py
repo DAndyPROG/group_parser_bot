@@ -10,6 +10,9 @@ main_menu_keyboard = ReplyKeyboardMarkup(
         ],
         [
             KeyboardButton(text="🌐 Go to the site")
+        ],
+        [
+            KeyboardButton(text="🔑 Add new session")
         ]
     ],
     resize_keyboard=True,

@@ -1,5 +1,7 @@
 from django import forms
 from .models import Channel, Category, Message
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
 class ChannelForm(forms.ModelForm):
     class Meta:
@@ -81,4 +83,31 @@ class MessageForm(forms.ModelForm):
                 'required': "This field is required.",
             },
         }
+
+class UserRegistrationForm(UserCreationForm):
+    """Form for registration of new users"""
+    email = forms.EmailField(
+        required=True,
+        help_text='Enter a valid email address'
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2')
+
+    def clean_email(self):
+        """Check for uniqueness of email"""
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('User with this email already exists')
+        return email
+        
+    def __init__(self, *args, **kwargs):
+        super(UserRegistrationForm, self).__init__(*args, **kwargs)
+        
+        # Hints for fields
+        self.fields['username'].help_text = 'Required field. No more than 150 characters. Only letters, numbers and @/./+/-/_.'
+        self.fields['password1'].help_text = ('Password must be at least 8 characters long and contain letters and numbers. ' 
+                                            'Should not be similar to your login.')
+        self.fields['password2'].help_text = 'Enter the same password for verification.'
 

@@ -17,32 +17,32 @@ def _get_channels():
     from admin_panel.models import Channel
     return list(Channel.objects.all())
 
-# Обгортаємо синхронну функцію в асинхронну
+# create async functions
 get_categories = sync_to_async(_get_categories)
 get_channels = sync_to_async(_get_channels)
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
-    await message.answer("Привіт! Я бот для парсингу повідомлень з Telegram каналів.", reply_markup=main_menu_keyboard)
+    await message.answer("Hello! I am a bot for parsing messages from Telegram channels.", reply_markup=main_menu_keyboard)
 
-@router.message(F.text == "🌐 Перейти на сайт")
+@router.message(F.text == "🌐 Go to the website")   
 async def website(message: types.Message):
-    # Використовуємо зовнішню IP-адресу або доменне ім'я, якщо воно налаштоване
-    website_url = f"http://192.168.0.237:{WEB_SERVER_PORT}"  # Змінено на IP, який відображається при запуску Flask
+    # Use external IP address or domain name, if it is configured
+    website_url = f"http://192.168.0.237:{WEB_SERVER_PORT}"  # Changed to IP that is displayed when Flask starts
     
-    # Створюємо інлайн-клавіатуру з кнопкою для переходу на сайт
+    # Create inline keyboard with button to go to the website
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
-        [types.InlineKeyboardButton(text="Відкрити сайт", url=website_url)],
-        [types.InlineKeyboardButton(text="Отримати QR-код", callback_data="get_qr_code")]
+        [types.InlineKeyboardButton(text="Open website", url=website_url)],
+        [types.InlineKeyboardButton(text="Get QR code", callback_data="get_qr_code")]
     ])
     
-    await message.answer("Сайт доступний за посиланням:", reply_markup=keyboard)
+    await message.answer("The website is available at the following link:", reply_markup=keyboard)
 
 @router.callback_query(F.data == "get_qr_code")
 async def send_qr_code(callback: types.CallbackQuery):
     website_url = f"http://192.168.0.237:{WEB_SERVER_PORT}"
     
     try:
-        # Створюємо QR-код для веб-сайту
+        # Create QR code for the website
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -54,64 +54,64 @@ async def send_qr_code(callback: types.CallbackQuery):
         
         img = qr.make_image(fill_color="black", back_color="white")
         
-        # Зберігаємо зображення у буфер
+        # Save the image to the buffer
         bio = BytesIO()
         img.save(bio, 'PNG')
         bio.seek(0)
         
-        # Відправляємо QR-код
+        # Send the QR code
         await callback.message.answer_photo(
             photo=types.BufferedInputFile(
                 file=bio.getvalue(), 
                 filename="qrcode.png"
             ),
-            caption=f"QR-код для доступу до сайту: {website_url}"
+            caption=f"QR code for access to the website: {website_url}"
         )
         await callback.answer()
     except Exception as e:
-        await callback.message.answer(f"Помилка створення QR-коду: {e}")
-        await callback.answer("Не вдалося створити QR-код")
+        await callback.message.answer(f"Error creating QR code: {e}")
+        await callback.answer("Failed to create QR code")
 
-@router.message(F.text == "📎Список каналів")
+@router.message(F.text == "📎 List of channels")
 async def list_channels(message: types.Message, channels_data: dict):
     """
-    Відображає список підключених каналів
+    Displays a list of connected channels
     """
     channels = await get_channels()
-    # Якщо повідомлення від адміністратора, надаємо клавіатуру з кнопками керування
+    # If the message is from the administrator, provide a keyboard with management buttons
     if message.from_user.id == ADMIN_ID:
-        await message.answer("Виберіть канал:", reply_markup=get_channels_keyboard(channels))
+        await message.answer("Select a channel:", reply_markup=get_channels_keyboard(channels))
         return
     
-    # Для звичайних користувачів просто показуємо список
+    # For regular users, simply show the list
     if not channels:
-        await message.answer("Список каналів порожній.")
+        await message.answer("The list of channels is empty.")
         return
     
-    channels_text = "📎 Список підключених каналів:\n\n"
+    channels_text = "📎 List of connected channels:\n\n"
     for channel in channels:
-        status = "✅ Активний" if channel.is_active else "❌ Неактивний"
+        status = "✅ Active" if channel.is_active else "❌ Inactive"
         channels_text += f"• {channel.name} ({status})\n"
     
     await message.answer(channels_text)
 
-@router.message(F.text == "📍Меню категорій")
+@router.message(F.text == "📍 Categories menu")
 async def list_categories(message: types.Message, channels_data: dict, categories: dict):
     """
-    Відображає список категорій
+    Displays a list of categories
     """
     categories = await get_categories()
-    # Якщо повідомлення від адміністратора, надаємо клавіатуру з кнопками керування
+    # If the message is from the administrator, provide a keyboard with management buttons
     if message.from_user.id == ADMIN_ID:
-        await message.answer("Виберіть категорію:", reply_markup=get_categories_keyboard(channels_data, categories))
+        await message.answer("Select a category:", reply_markup=get_categories_keyboard(channels_data, categories))
         return
     
-    # Для звичайних користувачів просто показуємо список
+    # For regular users, simply show the list
     if not categories:
-        await message.answer("Список категорій порожній.")
+        await message.answer("The list of categories is empty.")
         return
     
-    categories_text = "📍 Список категорій:\n\n"
+    categories_text = "📍 List of categories:\n\n"
     for category in categories:
         categories_text += f"• ID {category.id}: {category.name}\n"
     

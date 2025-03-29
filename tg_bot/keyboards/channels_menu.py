@@ -1,17 +1,44 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import logging
+
+logger = logging.getLogger('keyboards')
 
 def get_channels_keyboard(channels, category_id=None):
     """
-    create a keyboard with a list of channels.
-    if category_id is passed, filter channels by category.
+    create a keyboard with a list of channels. 
+    If category_id is specified, filter the channels by category.
+    
+    Args:
+        channels: list of Channel objects or a dictionary of channel data
+        category_id: category ID for filtering (optional)
     """
     keyboard = []
     
-    # add channel buttons
-    if channels:
+    # check the format of the channel data
+    if not channels:
+        logger.debug("Empty list of channels when creating the keyboard")
+    elif isinstance(channels, dict):
+        # processing data in dictionary format (from channels_data)
+        logger.debug(f"Processing {len(channels)} channels from the dictionary")
+        for channel_id, data in channels.items():
+            channel_category = data.get('category', None)
+            
+            # filter by category if specified
+            if category_id is None or channel_category == str(category_id):
+                status = "✅" if data.get('Work') == "True" else "❌"
+                button_text = f"{status} {data.get('Group_Name', 'Unknown')}"
+                keyboard.append([
+                    InlineKeyboardButton(text=button_text, callback_data=f"channel_{channel_id}"),
+                    InlineKeyboardButton(text="✏️", callback_data=f"edit_channel_{channel_id}")
+                ])
+    else:
+        # processing data in list of objects format (from the database)
+        logger.debug(f"Processing {len(channels)} channels from the list of objects")
         for channel in channels:
             channel_category_id = getattr(channel, 'category_id', None)
-            if channel_category_id is not None or channel_category_id != category_id:
+            
+            # filter by category if specified
+            if category_id is None or str(channel_category_id) == str(category_id):
                 status = "✅" if channel.is_active else "❌"
                 button_text = f"{status} {channel.name}"
                 keyboard.append([
@@ -19,13 +46,12 @@ def get_channels_keyboard(channels, category_id=None):
                     InlineKeyboardButton(text="✏️", callback_data=f"edit_channel_{channel.id}")
                 ])
 
-    # add "Add channel" button
+    # add buttons for adding and removing channels
     keyboard.append([InlineKeyboardButton(text="➕ Add channel", callback_data="add_channel")])
-    # add "Remove channel" button
     keyboard.append([InlineKeyboardButton(text="➖ Remove channel", callback_data="remove_channel")])
 
     if category_id:
-        # add "Back" button to return to the list of categories
+        # "Back" button to return to the list of categories
         keyboard.append([InlineKeyboardButton(text="⬅️ Back", callback_data="back")])
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
